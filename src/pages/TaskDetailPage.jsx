@@ -5,8 +5,7 @@ export default function TaskDetailPage() {
   const navigate = useNavigate();
   const { taskId } = useParams();
 
-  // Temporary task data.
-  // Later this can be replaced with data from MongoDB / API.
+ 
   const task = {
     id: taskId || '1',
     title: 'Wire tasks to MongoDB',
