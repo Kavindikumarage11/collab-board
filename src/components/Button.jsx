@@ -1,3 +1,4 @@
+// verified git identity
 import './Button.css';
 
 // This is a component. It's a function that returns JSX (HTML-like code).
