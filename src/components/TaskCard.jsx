@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'; 
 
 const TaskCard = ({ task }) => {
   const isDone = task.status === 'done';
