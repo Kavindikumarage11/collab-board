@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import mockTasks from './data/mockTasks';
+import { fetchTasks, createTask as apiCreateTask } from './api/tasks';
 import BoardPage from './pages/BoardPage';
 import TaskDetailPage from './pages/TaskDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -73,14 +73,26 @@ function MainBoardView({ tasks, onAddTask, searchTerm, setSearchTerm, memberFilt
   );
 }
 
-// Root App Component with Routing
+// Root App Component with Routing & Backend API Integration
 function App() {
-  const [tasks, setTasks] = useState(mockTasks);
+  const [tasks, setTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [memberFilter, setMemberFilter] = useState('all');
 
-  const handleAddTask = (newTask) => {
-    setTasks([newTask, ...tasks]);
+  // Fetch tasks from backend API when component mounts
+  useEffect(() => {
+    fetchTasks()
+      .then((data) => setTasks(data))
+      .catch((err) => console.error("Failed to load tasks from backend:", err));
+  }, []);
+
+  const handleAddTask = async (newTaskData) => {
+    try {
+      const createdTask = await apiCreateTask(newTaskData);
+      setTasks([createdTask, ...tasks]);
+    } catch (err) {
+      console.error("Failed to create task:", err);
+    }
   };
 
   return (

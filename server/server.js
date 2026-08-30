@@ -1,24 +1,24 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
 
 const app = express();
+const PORT = 4000;
 
-// Middleware
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
-// Task Routes
-app.use('/api/tasks', require('./routes/taskRoutes'));
+const tasks = [
+  { id: 1, title: "Design the login screen", status: "todo", assignee: "NK", dueDate: "Fri" },
+  { id: 2, title: "Write API contract doc", status: "todo", assignee: "RS", dueDate: "Mon" },
+  { id: 3, title: "Set up Docker compose", status: "doing", assignee: "TP", dueDate: "Wed" },
+  { id: 4, title: "Wire tasks to MongoDB", status: "doing", assignee: "DL", dueDate: "Today" },
+  { id: 5, title: "Build AddTaskForm", status: "done", assignee: "NK", dueDate: "Today" }
+];
 
-// Test Route
-app.get('/', (req, res) => {
-  res.send('API is running without DB...');
+app.get('/api/tasks', (req, res) => {
+  res.json(tasks);
 });
 
-// Server Startup (Without Mongoose for now)
-const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} (No DB connected yet)`);
+  console.log(`Backend server running on http://localhost:${PORT}`);
 });
