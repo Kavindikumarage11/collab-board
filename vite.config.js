@@ -1,3 +1,4 @@
+// Configuration added by Hiruka for API proxy
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
