@@ -1,34 +1,121 @@
-import React from 'react';
-import './index.css';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { fetchTasks, createTask as apiCreateTask } from './api/tasks';
+import BoardPage from './pages/BoardPage';
+import TaskDetailPage from './pages/TaskDetailPage';
+import NotFoundPage from './pages/NotFoundPage';
+import AddTaskForm from './components/AddTaskForm';
+import Button from './components/Button';
 
-export default function App() {
+// Main Layout Component for Board View
+function MainBoardView({ tasks, onAddTask, searchTerm, setSearchTerm, memberFilter, setMemberFilter }) {
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Filter tasks based on search query and member
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesMember = memberFilter === 'all' || task.assignee === memberFilter;
+    return matchesSearch && matchesMember;
+  });
+
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Header section based on design */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '18px', fontWeight: '500' }}>SyncBoard</span>
-          <span style={{ fontSize: '12px', background: '#e6f4ea', color: '#137333', padding: '3px 10px', borderRadius: '4px' }}>
-            3 online
+    <div className="min-h-screen bg-gray-950 text-white p-6">
+      {/* Header */}
+      <header className="flex justify-between items-center mb-8 flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <span className="text-xl font-bold tracking-wide">SyncBoard</span>
+          <span className="text-xs bg-emerald-950 text-emerald-400 px-3 py-1 rounded-full flex items-center gap-1 border border-emerald-800">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 3 online
           </span>
         </div>
-        
-        <div style={{ display: 'flex', gap: '8px', flex: 1, maxWidth: '420px', minWidth: '220px' }}>
-          <input type="text" placeholder="Search tasks" style={{ flex: 1, padding: '6px 10px', borderRadius: '4px', border: '1px solid #ccc' }} />
-          <select style={{ width: '120px', padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}>
-            <option>All members</option>
+
+        <div className="flex gap-2 flex-1 max-w-md min-w-[220px]">
+          <input
+            type="text"
+            placeholder="Search tasks"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 bg-gray-900 border border-gray-800 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-600"
+          />
+          <select
+            value={memberFilter}
+            onChange={(e) => setMemberFilter(e.target.value)}
+            className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-blue-600 w-32"
+          >
+            <option value="all">All members</option>
+            <option value="NK">NK</option>
+            <option value="RS">RS</option>
+            <option value="TP">TP</option>
+            <option value="DL">DL</option>
           </select>
         </div>
 
-        <button style={{ whiteSpace: 'nowrap', padding: '6px 12px', background: '#1a73e8', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          New task
-        </button>
+        <Button onClick={() => setIsModalOpen(true)}>New task</Button>
+      </header>
+
+      {/* Board Page Integration */}
+      <BoardPage tasks={filteredTasks} />
+
+      {/* Footer Status Indicators */}
+      <div className="mt-8 flex gap-6 text-xs text-gray-500">
+        <span>🔌 WebSocket connected</span>
+        <span>☁ Cached offline</span>
       </div>
 
-      {/* Main Container where Board or other pages will render */}
-      <div style={{ marginTop: '20px', padding: '20px', border: '1px dashed #ccc', borderRadius: '8px', textAlign: 'center', color: '#666' }}>
-        <p>Team members' components will be integrated here (Columns, TaskCards, etc.)</p>
-      </div>
+      {/* Add Task Modal */}
+      <AddTaskForm
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAddTask={onAddTask}
+      />
     </div>
   );
 }
+
+// Root App Component with Routing & Backend API Integration
+function App() {
+  const [tasks, setTasks] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [memberFilter, setMemberFilter] = useState('all');
+
+  // Fetch tasks from backend API when component mounts
+  useEffect(() => {
+    fetchTasks()
+      .then((data) => setTasks(data))
+      .catch((err) => console.error("Failed to load tasks from backend:", err));
+  }, []);
+
+  const handleAddTask = async (newTaskData) => {
+    try {
+      const createdTask = await apiCreateTask(newTaskData);
+      setTasks([createdTask, ...tasks]);
+    } catch (err) {
+      console.error("Failed to create task:", err);
+    }
+  };
+
+  return (
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <MainBoardView
+              tasks={tasks}
+              onAddTask={handleAddTask}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              memberFilter={memberFilter}
+              setMemberFilter={setMemberFilter}
+            />
+          }
+        />
+        <Route path="/task/:taskId" element={<TaskDetailPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
